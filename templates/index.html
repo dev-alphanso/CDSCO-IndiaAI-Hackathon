@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedDoc AI — Medical Document Processor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand-logo-wrap">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="MedDoc AI" class="brand-logo" />
+    </div>
+    <div class="brand-title">
+      <span class="brand-name">MedDoc <span class="brand-ai">AI</span></span>
+      <span class="brand-sub">Privacy-First Medical Document Processor</span>
+    </div>
+    <div class="header-status">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-label" id="statusLabel">Checking Ollama…</span>
+      <select class="model-select" id="modelSelect">
+        <option value="mistral">mistral</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<!-- ── WORKFLOW STEPS ──────────────────────────────────────── -->
+<section class="workflow-bar">
+  <div class="workflow-inner">
+    <div class="step active" id="step1"><span class="step-num">1</span><span class="step-label">Upload</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step2"><span class="step-num">2</span><span class="step-label">Configure</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step3"><span class="step-num">3</span><span class="step-label">OCR + NLP</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step4"><span class="step-num">4</span><span class="step-label">LLM</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step5"><span class="step-num">5</span><span class="step-label">Output</span></div>
+  </div>
+</section>
+
+<!-- ── MAIN 3-PANEL GRID ───────────────────────────────────── -->
+<main class="main-grid">
+
+  <!-- ══ LEFT PANEL — Upload & Configure ══════════════════ -->
+  <aside class="panel panel-left">
+
+    <div class="panel-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Document
+    </div>
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" hidden />
+      <div class="drop-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
+          <path d="M32 44V24M22 34l10-10 10 10" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 46h24" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="drop-title">Drag &amp; Drop here</p>
+      <p class="drop-sub">PDF, PNG, JPG, TIFF — up to 20 MB</p>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Browse File
+      </button>
+      <div class="file-preview" id="filePreview" hidden>
+        <div class="file-chip" id="fileChip"></div>
+        <button class="btn-icon" id="clearFile" title="Remove">✕</button>
+      </div>
+    </div>
+
+    <div class="panel-divider"></div>
+
+    <div class="panel-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Processing Mode
+    </div>
+
+    <!-- Mode selector -->
+    <div class="mode-list">
+      <label class="mode-item active" id="modeSum">
+        <input type="radio" name="mode" value="summary" checked hidden />
+        <div class="mode-icon mode-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="mode-text">
+          <strong>Clinical Summary</strong>
+          <span>Diagnosis, medicines &amp; notes</span>
+        </div>
+        <div class="mode-badge badge-blue">Summary</div>
+      </label>
+
+      <label class="mode-item" id="modeMask">
+        <input type="radio" name="mode" value="mask" hidden />
+        <div class="mode-icon mode-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="mode-text">
+          <strong>Privacy Masking</strong>
+          <span>Remove name, phone &amp; IDs</span>
+        </div>
+        <div class="mode-badge badge-purple">PII-Safe</div>
+      </label>
+
+      <label class="mode-item" id="modeReport">
+        <input type="radio" name="mode" value="report" hidden />
+        <div class="mode-icon mode-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="mode-text">
+          <strong>Structured Report</strong>
+          <span>Parsed JSON — EHR-ready</span>
+        </div>
+        <div class="mode-badge badge-green">JSON</div>
+      </label>
+    </div>
+
+    <div class="panel-divider"></div>
+
+    <!-- Process button -->
+    <button class="btn btn-primary btn-process" id="processBtn" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Process Document
+    </button>
+
+    <p class="left-footnote">All processing runs locally.<br/>Your data never leaves this machine.</p>
+
+  </aside>
+
+  <!-- ══ CENTER PANEL — Output ═════════════════════════════ -->
+  <section class="panel panel-center">
+
+    <!-- Idle state -->
+    <div class="idle-state" id="idleState">
+      <svg viewBox="0 0 120 120" fill="none" width="100">
+        <circle cx="60" cy="60" r="58" fill="#f0f9ff" stroke="#bae6fd" stroke-width="2"/>
+        <path d="M60 20v40l20 12" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M30 85h60M40 95h40" stroke="#bae6fd" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <h2>Ready to Process</h2>
+      <p>Upload a document on the left and click <strong>Process Document</strong> to begin.</p>
+      <div class="feature-pills">
+        <span class="pill">🔒 100% Local</span>
+        <span class="pill">🧠 Ollama LLM</span>
+        <span class="pill">📄 PDF + Image</span>
+        <span class="pill">🌐 Multilingual</span>
+      </div>
+    </div>
+
+    <!-- Processing state -->
+    <div class="processing-state" id="processingState" hidden>
+      <div class="processing-steps" id="processingSteps">
+        <div class="proc-step" id="procOcr">
+          <div class="proc-dot spinning"></div>
+          <div>
+            <strong>OCR Extraction</strong>
+            <span>Reading document text…</span>
+          </div>
+        </div>
+        <div class="proc-step pending" id="procClean">
+          <div class="proc-dot"></div>
+          <div><strong>Text Cleaning</strong><span>NLP preprocessing…</span></div>
+        </div>
+        <div class="proc-step pending" id="procLlm">
+          <div class="proc-dot"></div>
+          <div><strong>LLM Processing</strong><span>Running local model…</span></div>
+        </div>
+        <div class="proc-step pending" id="procOut">
+          <div class="proc-dot"></div>
+          <div><strong>Generating Output</strong><span>Finalizing result…</span></div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width:10%"></div>
+      </div>
+      <p class="processing-note">This may take 30–90 seconds depending on the model…</p>
+    </div>
+
+    <!-- Results -->
+    <div class="results-state" id="resultsState" hidden>
+
+      <div class="results-topbar">
+        <div class="results-meta" id="resultsMeta"></div>
+        <div class="results-actions">
+          <button class="btn btn-outline btn-sm" id="copyBtn">Copy</button>
+          <div class="dl-dropdown" id="dlDropdown">
+            <button class="btn btn-outline btn-sm dl-toggle" id="dlToggle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+              <svg class="dl-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <ul class="dl-menu" id="dlMenu">
+              <li><button class="dl-item" data-fmt="pdf">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span><strong>PDF</strong><em>Branded report</em></span>
+              </button></li>
+              <li><button class="dl-item" data-fmt="docx">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span><strong>Word (.docx)</strong><em>Editable document</em></span>
+              </button></li>
+              <li class="dl-divider"></li>
+              <li><button class="dl-item" data-fmt="json">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span><strong>JSON</strong><em>Raw structured data</em></span>
+              </button></li>
+            </ul>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="newJobBtn">New Job</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="resultTabs">
+        <button class="tab active" data-tab="output">Output</button>
+        <button class="tab" data-tab="raw">Raw OCR</button>
+        <button class="tab" data-tab="entities">Entities</button>
+      </div>
+
+      <div class="tab-content active" id="tabOutput">
+        <div id="summaryView" class="output-view" hidden>
+          <div class="output-prose" id="summaryContent"></div>
+        </div>
+        <div id="maskView" class="output-view" hidden>
+          <div class="mask-legend">
+            <span class="badge-token">[PATIENT_NAME]</span>
+            <span class="badge-token">[PHONE]</span>
+            <span class="badge-token">[ADDRESS]</span>
+            <span class="badge-token">[ID_NUMBER]</span>
+            <span class="badge-token">[DOB]</span>
+            <span class="mask-hint">= masked fields</span>
+          </div>
+          <pre class="output-pre" id="maskContent"></pre>
+        </div>
+        <div id="reportView" class="output-view" hidden>
+          <div class="report-grid" id="reportGrid"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tabRaw" hidden>
+        <pre class="output-pre" id="rawContent"></pre>
+      </div>
+
+      <div class="tab-content" id="tabEntities" hidden>
+        <div class="entities-grid" id="entitiesGrid"></div>
+      </div>
+
+    </div>
+
+    <!-- Error state -->
+    <div class="error-state" id="errorState" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="48">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <h3>Processing Failed</h3>
+      <p id="errorMsg"></p>
+      <button class="btn btn-outline" id="retryBtn">Try Again</button>
+    </div>
+
+  </section>
+
+  <!-- ══ RIGHT PANEL — Recent Jobs ════════════════════════ -->
+  <aside class="panel panel-right">
+
+    <div class="panel-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Recent Jobs
+      <button class="btn btn-ghost btn-xs" id="refreshHistory" style="margin-left:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <ul class="history-list" id="historyList">
+      <li class="history-empty">No jobs yet</li>
+    </ul>
+
+  </aside>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

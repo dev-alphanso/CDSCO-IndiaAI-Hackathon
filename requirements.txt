@@ -1,0 +1,13 @@
+flask
+flask-cors
+pillow
+pytesseract
+pdf2image
+spacy
+requests
+python-dotenv
+werkzeug
+numpy
+opencv-python
+reportlab
+python-docx
